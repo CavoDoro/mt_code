@@ -2,7 +2,7 @@
 * Name: mtv5
 * Author: Lina
 * Description: remove bugs: update of heating system in buildings instead of potential zones
-* Tags: Tag1, Tag2, TagN
+* Tags: #gleisdorf #energynetworks
 ***/
 
 model mtv5
