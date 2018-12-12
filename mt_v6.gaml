@@ -1,11 +1,11 @@
 /***
 * Name: mtv5
 * Author: Lina
-* Description: remove bugs: update of heating system in buildings instead of potential zones
+* Description: define random variables
 * Tags: #gleisdorf #energynetworks
 ***/
 
-model mtv5
+model mtv6
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //THE GLOBAL SPECIES
@@ -53,27 +53,21 @@ global {
     file demograpghic_2011_gleisdorf <-file("../includes/5100_dem_11.shp");
     //demographic_raster_2016
     file demograpghic_2016_gleisdorf <-file("../includes/5200_dem_16.shp");
+    //demographic_polygon_2011
+    file demographic_polygon_2011_gleisdorf <- file("../includes/5100_dem_11_polygon.shp");
+
     
     //initialisation once at the beginning
     //init of environment = geometry (world agent), size = border of Gleisdorf
     geometry shape <- envelope(border_gleisdorf);
     
-    geometry building_shape <- envelope(building_polygons) /*+ envelope(dh_network_gleisdorf) + envelope(gas_network_gleisdorf)
-    	 + envelope(dh_potential_gleisdorf) + envelope(gas_potential_gleisdorf) + envelope(air_hp_potential_gleisdorf) + envelope(biomass_potential_gleisdorf)
-    	+ envelope(oil_potential_gleisdorf) + envelope(electric_potential_gleisdorf) + */;
- 
-//     geometry potential_shape <- envelope (electric_potential_gleisdorf)+ envelope(dh_potential_gleisdorf) + envelope(gas_potential_gleisdorf) + envelope(air_hp_potential_gleisdorf) + envelope(biomass_potential_gleisdorf)
-//    	+ envelope(oil_potential_gleisdorf);    
-
+    geometry building_shape <- envelope(building_polygons); 
+    
 	geometry dh_pot <- geometry(dh_potential_gleisdorf);
     geometry air_pot <- geometry(air_hp_potential_gleisdorf);	
+    
     geometry demographic_raster <- envelope(envelope(demograpghic_2011_gleisdorf) + envelope(demograpghic_2016_gleisdorf));
-    
-    
-    geometry building_geometry <- geometry(building_polygons);
- 
-//    int debug_dimensions min: 10 <- 500;
-//    geometry debug_r <- square(debug_dimensions);   
+
     
     geometry dh_net	<- geometry(dh_network_gleisdorf);
     geometry gas_net	<- geometry(gas_network_gleisdorf);
@@ -104,6 +98,8 @@ global {
     		renovation_status_input::string(read("ren_status")),hwb_initial::int(read("hwb_m2_a")),hwb_usual::int(read("usual_hwb"))
     		,hwb_advanced::int(read("klima_hwb")), total_wwwb_initial::float(read("wwwb_kwh")), total_hteb_initial::float(read("hteb_kwh")),
     		total_heb_initial::float(read("heb_kwh"))];
+    		
+    	create dem_buildings from: demographic_polygon_2011_gleisdorf with: [age_19_m :: string(read("r_m_0to19"))];
     	
     	//  create species for potential zones where is a need for reading the attribute table of the potential zone  	 	
 //    	create dh_potential from: dh_potential_gleisdorf;
@@ -519,7 +515,8 @@ species buildings {
 	action renovation_action{
 		
 		renovation_status_actual <- "RENOVATION NEEDED";
-		is_renovated <- flip(0.15);
+		//renovation rate randomly between 8 and 15 percent of all buildings which need a renovation
+		is_renovated <- flip(rnd(0.08, 0.20));
 		
 		if is_renovated=true{
 			//age
@@ -732,7 +729,11 @@ aspect age_aspect {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
+	species dem_buildings {
+		float age_19_m;
+	}
 	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	species my_people /*skills:[moving] */{
 		
@@ -799,23 +800,17 @@ experiment renovation type:gui /* + specify the type : "type:gui" or "type:batch
         
 
         
-        
-        display renovation_stats type: java2D{
-        	chart "The city of Gleisdorf" type: pie {
-        		
-				
-        		
-        
-        		data "BCC" value: 100 + cos(100 * cycle) * cycle * cycle color: # black;
-				data "ABC" value: cycle * cycle color: # blue;
-				//data "BCD" value: hwb_actual;
-        			
-        			
-				//data "heating system" value: count(type);
-				//(list(self.testtyp));
-				        	}       	
-       }
-        
+//        
+//        display renovation_stats type: java2D{
+//        	chart "The city of Gleisdorf" type: pie {
+//        		
+//		
+//        			
+//				//data "heating system" value: count(type);
+//				//(list(self.testtyp));
+//				        	}       	
+//       }
+//        
     }  
 ////STORE the simulation    
 //        reflex store when: cycle = 18 and 33{		
