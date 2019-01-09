@@ -1,11 +1,11 @@
 /***
-* Name: mtv5
+* Name: mtv7
 * Author: Lina
 * Description: define random variables
 * Tags: #gleisdorf #energynetworks
 ***/
 
-model mtv6
+model mtv7
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //THE GLOBAL SPECIES
@@ -101,15 +101,10 @@ global {
 	int res_count -> {length (buildings where(each.residential_type = "res"))};
 	int nores_count -> {length (buildings where(each.residential_type = "nonres"))}; 
 	
-
-	
     //creation=init of all other agents = regular species = members of the world
     init {
     	create border from: border_gleisdorf;
-    	
-    	//create dh_network from: dh_network_gleisdorf;
-    	//create gas_network from: gas_network_gleisdorf;
-    	    	
+
     	create buildings from: building_polygons with:[type::string(read("b_use")),year_construction::int(read("c_year")),
     		tabula_start::int(read("start_p")), gfa::int(read("gross_area")), heating_system_initial::string(read("heat_type")),
     		renovation_status_input::string(read("ren_status")),hwb_initial::int(read("hwb_m2_a")),hwb_usual::int(read("usual_hwb"))
@@ -130,26 +125,38 @@ global {
     	//create hwb_point_s from: point(hwb_point);
     	create species:my_people number: 1000 {
     		location <- (point(one_of(buildings)));
-    	} 		   		   	
-   	} 	
+    		}
+    	 save  ("-------------------------------------------------------------------------")  to: "../results/results.txt" rewrite: false;
+    	}	
+   	
+   	
+   	
+   		   		
    	reflex global_debug {
+   		
+   		
    				write "----------------------------------------------------------------";
    				write "number of  buildings total: " + building_count_total_init ;
 				write "number of not renovated buildings init: " + building_count_not_renovated_init;
 				write "number of normal renovated buildings init: " + building_count_normal_renovated_init;
 				write "number of advanced renovated buildings init: " + building_count_advanced_renovated_init;
-				write "renovated total: " 	+ (building_count_normal_renovated_init	+ building_count_advanced_renovated_init);   	
+				write "renovated total init: " 	+ (building_count_normal_renovated_init	+ building_count_advanced_renovated_init);   	
 				
 				
 				
-						write "no need for renovation: " +no_need_count;
-		write "need for renovation: " + renovation_need_count;
-		write "renovated at simulation time: " + renovation_sim_count;
-	
-				
-					
+				write "no need for renovation: " +no_need_count;
+				write "need for renovation: " + renovation_need_count;
+				write "renovated at simulation time: " + renovation_sim_count;					
 	}
-
+	
+	
+	//safe statistics in .txt file
+    	reflex save_result when: every (1#cycles) {
+			save 
+			("cycle : "+ (cycle) + " no need for renovation : " + (no_need_count)
+				+ " need for renovation : " + renovation_need_count + " renovated at simulation time : " + renovation_sim_count)
+	   		to: "../results/results.txt" rewrite: false;
+		}
 //	reflex save_buildings_2035 when: cycle = 18{
 //		ask buildings {
 //			// save the values of the variables name, speed and size to the csv file; the rewrite facet is set to false to continue to write in the same file
@@ -170,7 +177,7 @@ global {
 			//save buildings to: "../results/building_agents_2050.csv" type:"csv" rewrite: true;
 		}
 		//End the modelling process as the data are saved
-		do halt;
+		do pause;
 	}
 	
 }
@@ -343,13 +350,12 @@ species buildings {
     bool inside_pvp;
     bool inside_pvp_1; //bool for very good suitability (where abilitiy is "sehr good" and area is bigger than 50qm?)
       
-    list<buildings> res_buildings <- buildings where (each.type="single-family home");
-    list<string> nam <- list<string>(name);
-    list<string> testtyp <- list<string>(heating_system_initial);
-	
+//    list<buildings> res_buildings <- buildings where (each.type="single-family home");
+//    list<string> nam <- list<string>(name);
+//    list<string> testtyp <- list<string>(heating_system_initial);
+//	
 
-	
-    
+  
     rgb color <- #gray; //defaultcolor for buildings without specific aspect
    
 //INIT//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -535,8 +541,9 @@ species buildings {
 	action renovation_action{
 		
 		renovation_status_actual <- "RENOVATION NEEDED";
-		//renovation rate randomly between 8 and 15 percent of all buildings which need a renovation
-		is_renovated <- flip(rnd(0.08, 0.20));
+		//renovation rate randomly between 3,4 and 7,5 percent of all buildings which need a renovation
+		//these are estimated 1 to 2,2 percent of all buildings in Gleisdorf
+		is_renovated <- flip(rnd(0.04, 0.08));
 		
 		if is_renovated=true{
 			//age
